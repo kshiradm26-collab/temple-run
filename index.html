@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Dragon Temple: Ruin Flight - 3D Endless Runner</title>
+  <meta name="description" content="A high-fidelity 3D endless runner game set in an ancient jungle temple chasm. Escape the pursuing dragon!">
+  <link rel="stylesheet" href="style.css">
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700;900&family=Outfit:wght@400;600;800&display=swap" rel="stylesheet">
+  <!-- Three.js CDN -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+</head>
+<body>
+
+  <div id="game-container">
+    <!-- WebGL Canvas -->
+    <canvas id="game-canvas"></canvas>
+
+    <!-- In-Game HUD Overlay -->
+    <div id="hud-overlay" class="ui-layer hidden">
+      <!-- Top Status Bar -->
+      <div class="hud-top-bar">
+        <div class="hud-pill distance-pill">
+          <span class="icon">🏃</span>
+          <span id="hud-distance">0</span><span class="unit">m</span>
+        </div>
+
+        <div class="hud-pill-group">
+          <div class="hud-pill coin-pill">
+            <span class="icon coin-icon">🪙</span>
+            <span id="hud-coins">0</span>
+          </div>
+          <div class="hud-pill diamond-pill">
+            <span class="icon diamond-icon">💎</span>
+            <span id="hud-diamonds">0</span>
+          </div>
+        </div>
+
+        <div class="hud-pill speed-pill">
+          <span class="label">SPD</span>
+          <span id="hud-speed">100%</span>
+        </div>
+      </div>
+
+      <!-- Center Dynamic Warnings & Alerts -->
+      <div id="alert-banner" class="alert-banner hidden">
+        <span id="alert-text">DRAGON FIRE BREATH!</span>
+      </div>
+
+      <!-- Powerups & Ability Bar -->
+      <div class="hud-bottom-bar">
+        <!-- Active Powerup Badges -->
+        <div class="powerup-status-container">
+          <div id="magnet-badge" class="powerup-badge hidden">
+            <span class="badge-icon">🧲</span>
+            <div class="badge-info">
+              <span class="badge-title">MAGNET</span>
+              <div class="progress-bar-bg"><div id="magnet-timer-bar" class="progress-bar-fill"></div></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Parachute Action Button -->
+        <div id="parachute-btn-container" class="action-btn-container">
+          <button id="parachute-btn" class="action-btn parachute-btn" title="Deploy Parachute (Hotkey: P)">
+            <div class="btn-icon">🪂</div>
+            <div class="btn-info">
+              <span class="btn-title">GLIDE</span>
+              <span class="btn-key">[P]</span>
+            </div>
+            <div id="parachute-count" class="btn-badge">1</div>
+          </button>
+        </div>
+      </div>
+
+      <!-- On-Screen Arrow Controls Dock for Easy Shifting & Mobile/Desktop Play -->
+      <div id="arrow-controls-dock" class="arrow-dock-layer">
+        <div class="dock-row">
+          <button id="btn-jump" class="arrow-btn jump-btn" title="Jump (Up Arrow / W)">
+            <span class="btn-icon">▲</span>
+            <span class="btn-lbl">JUMP</span>
+          </button>
+        </div>
+        <div class="dock-row middle-row">
+          <button id="btn-shift-left" class="arrow-btn shift-btn" title="Shift Left (Left Arrow / A)">
+            <span class="btn-icon">◄</span>
+            <span class="btn-lbl">LEFT</span>
+          </button>
+          <button id="btn-slide" class="arrow-btn slide-btn" title="Slide (Down Arrow / S)">
+            <span class="btn-icon">▼</span>
+            <span class="btn-lbl">SLIDE</span>
+          </button>
+          <button id="btn-shift-right" class="arrow-btn shift-btn" title="Shift Right (Right Arrow / D)">
+            <span class="btn-lbl">RIGHT</span>
+            <span class="btn-icon">►</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Start / Title Screen -->
+    <div id="start-screen" class="ui-layer overlay-screen">
+      <div class="screen-card">
+        <div class="badge-tag">3D ENDLESS RUNNER</div>
+        <h1 class="game-title">DRAGON TEMPLE</h1>
+        <h2 class="game-subtitle">RUIN FLIGHT</h2>
+        <p class="game-desc">
+          Escape the ancient winged dragon! Shift left & right to dodge deadly temple ladders. Beware of crumbling chasms — one drop underground is fatal!
+        </p>
+
+        <!-- Control Scheme Guide -->
+        <div class="controls-grid">
+          <div class="control-item">
+            <div class="key-box">◄ LEFT / RIGHT ►</div>
+            <span>Shift Lanes (Arrows / A & D)</span>
+          </div>
+          <div class="control-item">
+            <div class="key-box">▲ UP / Space / W</div>
+            <span>Jump Hurdles</span>
+          </div>
+          <div class="control-item">
+            <div class="key-box">▼ DOWN / S</div>
+            <span>Slide Under Ruins</span>
+          </div>
+          <div class="control-item">
+            <div class="key-box highlight-key">P Key / 🪂 Icon</div>
+            <span>Deploy Parachute</span>
+          </div>
+        </div>
+
+        <div class="high-score-display">
+          <span>🏆 BEST FLIGHT: </span>
+          <strong id="start-high-score">0 m</strong>
+        </div>
+
+        <button id="start-btn" class="primary-btn glow-btn">
+          <span>LAUNCH FLIGHT</span>
+          <div class="btn-shine"></div>
+        </button>
+      </div>
+    </div>
+
+    <!-- Game Over Screen -->
+    <div id="gameover-screen" class="ui-layer overlay-screen hidden">
+      <div class="screen-card gameover-card">
+        <div id="death-reason" class="death-tag">DEVOURED BY THE DRAGON</div>
+        <h2 class="screen-heading">FLIGHT TERMINATED</h2>
+
+        <div class="stats-summary-grid">
+          <div class="stat-box">
+            <span class="stat-label">DISTANCE</span>
+            <span id="final-distance" class="stat-value">0 m</span>
+          </div>
+          <div class="stat-box">
+            <span class="stat-label">COINS</span>
+            <span id="final-coins" class="stat-value">0</span>
+          </div>
+          <div class="stat-box">
+            <span class="stat-label">DIAMONDS</span>
+            <span id="final-diamonds" class="stat-value">0</span>
+          </div>
+          <div class="stat-box highlight-stat">
+            <span class="stat-label">TOTAL SCORE</span>
+            <span id="final-score" class="stat-value">0</span>
+          </div>
+        </div>
+
+        <div id="new-high-score-tag" class="new-record-banner hidden">
+          🌟 NEW RECORD FLIGHT SCORE! 🌟
+        </div>
+
+        <div class="btn-row">
+          <button id="restart-btn" class="primary-btn glow-btn">
+            <span>RESTART FLIGHT</span>
+            <div class="btn-shine"></div>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="game.js"></script>
+</body>
+</html>
